@@ -7,7 +7,7 @@ import { isEnvBrowser } from "../../utils/misc"
 import InputBar from "./InputBar"
 import Messages from "./Messages"
 import useChat, { CommandProps, MessageProps, UserSettingsProps } from "./store"
-import TestBed from "./TestBed"
+
 
 
 export default function Main() {
