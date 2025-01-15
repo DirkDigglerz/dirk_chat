@@ -1,4 +1,4 @@
-import create from 'zustand';
+import { create } from 'zustand';
 import ClickSound from './click_sound.mp3';
 import HoverSound from './hover_sound.mp3';
 
@@ -9,7 +9,7 @@ type AudioPlayerStore = {
 };
 
 // Create the store using Zustand
-export const useAudioPlayerStore = create<AudioPlayerStore>((set) => {
+export const useAudioPlayerStore = create<AudioPlayerStore>(() => {
   const audioRefs: { [key: string]: HTMLAudioElement } = {};
 
   // Predefined sounds
