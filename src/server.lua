@@ -28,9 +28,10 @@ local addMessage = function(src, channel, message)
     }
   end
 
-  print(('Player %s sent message %s'):format(src, message.text))
   TriggerClientEvent('clean_chat:addMessage', -1, channel, message)
 end
+
+exports('addMessage', addMessage)
 
 RegisterNetEvent('clean_chat:addMessage', function(channel, message)
   local src = source

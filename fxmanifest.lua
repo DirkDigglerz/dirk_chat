@@ -9,7 +9,7 @@ version      '1.0.1'
 shared_script 'settings/*.*'
 
 client_script { 
-  'src/client.lua',
+  'src/client/*.lua',
 } 
 
 server_script { 

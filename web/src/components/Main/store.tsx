@@ -17,13 +17,13 @@ export type MessageProps = {
 
 export type ParamProps = {
   name: string; 
-  helpText: string;
+  help: string;
 }
 
 export type CommandProps = {
   name: string;
-  helpText: string;
-  params: ParamProps[];
+  help?: string;
+  params?: ParamProps[];
 }
 
 export type UserSettingsProps = {
@@ -49,7 +49,7 @@ const useChat = create<ChatProps>(() => ({
   settings: {
     hide: 'auto',
     hideTimeout: 5000,  
-    sounds: true
+    sounds: false
   },
   messages: [
     {
@@ -72,17 +72,21 @@ const useChat = create<ChatProps>(() => ({
   commands: [
     {
       name: 'help',
-      helpText: 'print help message',
+      help: 'print help message',
       params: [
         {
           name: 'command',
-          helpText: 'command to get help for'
+          help: 'command to get help for'
+        },
+        {
+          name: 'subcommand',
+          help: 'subcommand to get help for'
         }
       ]
     },
     {
       name: 'clear',
-      helpText: 'clear all messages',
+      help: 'clear all messages',
       params: []
     }
   ]

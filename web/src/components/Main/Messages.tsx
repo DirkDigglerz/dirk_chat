@@ -58,7 +58,6 @@ export default function Messages() {
   useEffect(() => {
 
     if (containerRef.current) {
-      console.log('scrolling')
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
   }, [messages]);

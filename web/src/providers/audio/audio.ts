@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import ClickSound from './click_sound.mp3';
 import HoverSound from './hover_sound.mp3';
+import MessageSent from './message_sent.mp3';
 
 // Define a type for the store state and actions
 type AudioPlayerStore = {
@@ -16,6 +17,7 @@ export const useAudioPlayerStore = create<AudioPlayerStore>(() => {
   const sounds: { [key: string]: string } = {
     click: ClickSound,
     hover: HoverSound,
+    message_sent: MessageSent,
   };
 
   // Initialize audio elements for each sound

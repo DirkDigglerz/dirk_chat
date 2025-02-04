@@ -1,16 +1,18 @@
 import { IconProp } from "@fortawesome/fontawesome-svg-core"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { Flex, FocusTrap, Text, useMantineTheme } from "@mantine/core"
-import { useClickOutside, useFocusTrap, useFocusWithin, useHover, useMergedRef } from "@mantine/hooks"
-import { useCallback, useEffect, useState } from "react"
+import { Flex, Text, useMantineTheme } from "@mantine/core"
+import { useHover } from "@mantine/hooks"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { useAudioPlayerStore } from "../../providers/audio/audio"
 import colorWithAlpha from "../../utils/colorWithAlpha"
 import { fetchNui } from "../../utils/fetchNui"
+import { isEnvBrowser } from "../../utils/misc"
 import SettingsMenu from "./SettingsMenu"
 import useChat, { CommandProps } from "./store"
-import { isEnvBrowser } from "../../utils/misc"
 
 type InputButtonProps = {
   icon: string;
+  inUse?: boolean;
   onClick: () => void;
 }
 
@@ -26,22 +28,29 @@ function InputButton(props: InputButtonProps) {
         transition: 'all 0.1s ease-in-out',
         marginRight: theme.spacing.xs,
         cursor: 'pointer',
-        color: !hovered ? 'rgba(255,255,255,0.5)' : colorWithAlpha(theme.colors[theme.primaryColor][9], 0.6)
+        color: hovered || props.inUse ? colorWithAlpha(theme.colors[theme.primaryColor][9], 0.6) : 'rgba(255,255,255,0.5)' 
       }}
       onClick={props.onClick}
     />
   )
 }
-import { useRef } from "react";
 
 function InputBar() {
   const open = useChat((state) => state.open);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settings = useChat((state) => state.settings);
+  const [settingsOpen, setSettingsOpen] = useState(true);
   const [prevSentMessages, setPrevSentMessages] = useState<string[]>([]);
   const [prevSentMessageIndex, setPrevSentMessageIndex] = useState<number | null>(null);
   const currentInput = useChat((state) => state.currentInput);
   const theme = useMantineTheme();
   const inputRef = useRef<HTMLInputElement | null>(null); // Reference for the input
+
+  // if the open goes to false close Settingsopen 
+  useEffect(() => {
+    if (!open) {
+      setSettingsOpen(false)
+    }
+  }, [open])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -63,11 +72,18 @@ function InputBar() {
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [prevSentMessageIndex, prevSentMessages]);
+  }, [prevSentMessageIndex, prevSentMessages, open]);
 
   const handleMessageSend = useCallback(
     (currentInput: string) => {
-      if (currentInput === "") return;
+      if (currentInput === "") {
+        useChat.setState({ open: false });
+        fetchNui("CHAT_CLOSED");
+        return;
+      }
+      if (settings.sounds) {
+        useAudioPlayerStore.getState().play("message_sent")
+      }
 
       if (isEnvBrowser()) {
         useChat.setState({
@@ -89,7 +105,7 @@ function InputBar() {
       setPrevSentMessageIndex(null);
       useChat.setState({ currentInput: "" });
     },
-    [prevSentMessages]
+    [prevSentMessages, settings.sounds]
   );
 
   // listen for enter key while input is focused
@@ -122,6 +138,8 @@ function InputBar() {
         inputRef.current.focus();
       }
     }, [open]);
+
+
 
   return (
     <Flex>
@@ -159,6 +177,7 @@ function InputBar() {
           onBlur={handleBlur} // Ensure refocus on blur
         />
         <InputButton
+          inUse={settingsOpen}
           icon="fa fa-cog"
           onClick={() => setSettingsOpen(!settingsOpen)}
         />
@@ -175,10 +194,18 @@ function InputBar() {
 
 function SuggestionBox(){
   const theme = useMantineTheme()
+  const open = useChat(state => state.open)
   const currentInput = useChat(state => state.currentInput)
   const commands = useChat(state => state.commands)
   const [currentSuggestions, setCurrentSuggestions] = useState<CommandProps[]>([])
   const [currentParamPosition, setCurrentParamPosition] = useState<number | null>(null)
+
+  // if global closes close the suggestions
+  useEffect(() => {
+    if (!open) {
+      setCurrentSuggestions([])
+    }
+  }, [open]) 
 
   // Listen for tab key for autocomplete of first recommended suggestion 
   useEffect(() => {
@@ -208,6 +235,9 @@ function SuggestionBox(){
           const paramPosition = inputParts.length - 1
           setCurrentParamPosition(paramPosition)
         }
+        else {
+          setCurrentParamPosition(null)
+        }
       } else {
         setCurrentSuggestions(commands.filter(command => command.name.startsWith(commandName)))
       }
@@ -230,6 +260,7 @@ function SuggestionBox(){
       mah='10vh'
       gap='0.1vh'
       style={{
+        overflow: 'hidden',
         // opacity: currentSuggestions.length === 0 ? 0 : 1,
         outline: `0.2vh solid ${colorWithAlpha(theme.colors[theme.primaryColor][9], 0.5)}`,
         transform: 'translateY(100%)',
@@ -240,20 +271,27 @@ function SuggestionBox(){
     >
       {currentSuggestions.map((command) => (
         <Flex
-          gap='xs'
+          direction={'column'}
         >
-          <Text
-            size='xs'
-          >/{command.name}</Text>
-          {command.params.map((param, indexOf) => (
+          <Flex
+            gap='xxs'
+          >
             <Text
               size='xs'
-              c={currentParamPosition === indexOf ? theme.colors[theme.primaryColor][9] : 'rgba(255,255,255,0.8)'}
-            >[{param.name}]</Text>
-          ))}
+            >/{command.name}</Text>
+            {command.params && command.params.map((param, indexOf) => (
+              <Text
+                size='xs'
+                c={currentParamPosition === (indexOf + 1 )? theme.colors[theme.primaryColor][9] : 'rgba(255,255,255,0.8)'}
+              >[{param.name}]</Text>
+            ))}
 
 
-        </Flex>
+          </Flex>
+          <Text size='xxs'>
+            {currentParamPosition == null && command.help || command.params && currentParamPosition && command.params[currentParamPosition - 1]?.help} 
+          </Text>
+        </Flex> 
       ))}
     </Flex>
   )

@@ -10,7 +10,6 @@ import useSettings from '../providers/settings';
 
 
 const App: React.FC = () => {
-  console.log('App.tsx');
   const [curTheme, setCurTheme] = useState(theme);
   const settings = useSettings(state => state);
   // Ensure the theme is updated when the settings change

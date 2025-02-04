@@ -60,8 +60,15 @@ export default function Main() {
     })
   })
 
-  useNuiEvent<boolean>('TOGGLE_CHAT', (data: boolean) => {
-    useChat.setState({ open: data })
+  useNuiEvent<{
+    display: boolean;
+    registeredCommands: CommandProps[];
+  }>('TOGGLE_CHAT', (data: {
+    display: boolean;
+    registeredCommands: CommandProps[];
+  }) => {
+    useChat.setState({ open: data.display })
+    useChat.setState({ commands: data.registeredCommands })
   })
 
   useEffect(() => {
@@ -74,7 +81,8 @@ export default function Main() {
       useSettings.setState({
         primaryColor: data.primaryColor,
         primaryShade: data.primaryShade,
-        customTheme: data.customTheme
+        customTheme: data.customTheme,
+        
       })
       useChat.setState({
         settings: data.settings
