@@ -24,14 +24,14 @@ export default function Main() {
     return () => document.removeEventListener('keydown', handleKeyDown  ) 
   }, [])
 
-  useNuiEvent('ADD_COMMAND', (data) => {
-    const command = data as unknown as CommandProps
-    useChat.setState({
+  useNuiEvent<CommandProps>('ADD_COMMAND', (data) => {
+    console.log('ADD_COMMAND', JSON.stringify(data))
+    useChat.setState((state) => ({
       commands: [
-        ...useChat.getState().commands,
-        command
+        ...state.commands,
+        data
       ]
-    })
+    }))
   })
 
   useNuiEvent('CLEAR_CHAT', () => {

@@ -1,8 +1,17 @@
 registeredCommands = {}
 
 local addSuggestion = function(name, help, params)
+  print('Adding suggestion', name, help, json.encode(params, {indent = true}))
   local invoking_resource = GetCurrentResourceName()
   table.insert(registeredCommands, {name = name, help = help, params = params, invoking_resource = invoking_resource})
+  SendNuiMessage(json.encode({
+    action = 'ADD_COMMAND',
+    data = {
+      name = name,
+      help = help,
+      params = params
+    }
+  }))
 end 
 
 local removeSuggestionByResource = function(resource)
@@ -33,5 +42,33 @@ AddEventHandler('onClientResourceStart', function(resource)
 end)
 
 CreateThread(function()
+  Wait(2000)
   refreshAllCommands()
 end)
+
+
+RegisterNetEvent('chat:addSuggestions', function(suggestions)
+  for _, props in ipairs(suggestions) do
+    addSuggestion(props.name, props.help, props.params)
+  end
+end)
+
+RegisterNetEvent('chat:addSuggestion', function(command, help, params)
+
+  command = command:sub(2)
+  print('Adding suggestion', command, help, json.encode(params, {indent = true}))
+  addSuggestion(command, help, params)
+end)
+
+-- --- eXAMPLE COMMAND 
+-- RegisterCommand('example', function(source, args, rawCommand)
+--   TriggerEvent('chat:addMessage', {
+--     color = {255, 0, 0},
+--     multiline = true,
+--     args = {'[EXAMPLE]', 'This is an example command'}
+--   })
+-- end, false)
+
+-- TriggerEvent('chat:addSuggestion', '/example', 'This is an example command', {
+--   {name = 'example', help = 'This is an example parameter'}
+-- })

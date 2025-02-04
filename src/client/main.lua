@@ -18,7 +18,7 @@ toggleChat = function(state)
 end
 
 
-local addMessage = function(channel, message, tags)
+addMessage = function(channel, message, tags)
   if type(message) == 'string' then
     message = {
       text = message,
@@ -63,3 +63,5 @@ end)
 
 
 -- COMPAT 
+
+
