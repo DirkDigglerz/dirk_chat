@@ -38,7 +38,7 @@ function InputButton(props: InputButtonProps) {
 function InputBar() {
   const open = useChat((state) => state.open);
   const settings = useChat((state) => state.settings);
-  const [settingsOpen, setSettingsOpen] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [prevSentMessages, setPrevSentMessages] = useState<string[]>([]);
   const [prevSentMessageIndex, setPrevSentMessageIndex] = useState<number | null>(null);
   const currentInput = useChat((state) => state.currentInput);
@@ -145,7 +145,7 @@ function InputBar() {
     <Flex>
       <Flex
         pos="absolute"
-        left={open ? "0" : "-60vh"}
+        left={open ? "0" : "-80vh"}
         mt="auto"
         bg="rgba(0,0,0,0.5)"
         w="100%"

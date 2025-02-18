@@ -7,70 +7,66 @@ import useChat, { MessageProps, MessageTags } from "./store";
 export default function Messages() {
   const settings = useChat((state) => state.settings);
   const open = useChat((state) => state.open);
-  const [display, setDisplay] = useState(
-    settings.hide === "never"
-      ? true
-      : settings.hide === "always" && !open
-      ? false
-      : settings.hide === "auto" && !open
-      ? false
-      : true
-  );
-
   const messages = useChat((state) => state.messages);
   const theme = useMantineTheme();
   const containerRef = useRef<HTMLDivElement>(null);
-
   const hideTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // If open is true then show the messages
+  const [display, setDisplay] = useState(open || settings.hide !== "always");
+
   useEffect(() => {
-    if (open) {
-      setDisplay(true);
+    setDisplay(open || settings.hide !== "always");
+  }, [open, settings.hide]);
+
+
+  useEffect(() => {
+    if (hideTimer.current) {
+      clearTimeout(hideTimer.current);
     }
-    
   
-  }, [open]);
-
-  useEffect(() => {
-    if (settings.hide === "auto") {
-      // Ensure any existing timer is cleared
-      if (hideTimer.current) {
-        clearTimeout(hideTimer.current);
-      }
-
-      // Show the messages and start the timer
-      setDisplay(true);
-
+    if (!open && settings.hide === "auto") {
+      setDisplay(true); // Ensure messages appear when they arrive
+  
       hideTimer.current = setTimeout(() => {
         setDisplay(false);
       }, settings.hideTimeout);
-
-      // Cleanup timer on component unmount
-      return () => {
-        if (hideTimer.current) {
-          clearTimeout(hideTimer.current);
-        }
-      };
+    } else {
+      setDisplay(open); // Ensure they stay open if chat is open
     }
-  }, [messages, settings.hide, settings.hideTimeout]);
-  // Scroll to the bottom when messages change
+  
+    return () => {
+      if (hideTimer.current) {
+        clearTimeout(hideTimer.current);
+      }
+    };
+  }, [open, settings.hide, settings.hideTimeout, messages.length]); // Watch messages.length instead of messages to trigger on new messages
+  
+
   useEffect(() => {
-
-    if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
-    }
+    requestAnimationFrame(() => {
+      if (containerRef.current) {
+        containerRef.current.scrollTop = containerRef.current.scrollHeight;
+      }
+    });
   }, [messages]);
+
+  // on open also scroll to bottom
+  useEffect(() => {
+    if (open) {
+      requestAnimationFrame(() => {
+        if (containerRef.current) {
+          containerRef.current.scrollTop = containerRef.current.scrollHeight;
+        }
+      });
+    }
+  }, [open]);
 
   return (
     <Flex
       direction="column"
       h="100%"
       flex={1}
-      // p="xxs"
-      // bg="rgba(0,0,0,0.5)"
       style={{
-        // outline: `0.2vh solid ${colorWithAlpha(theme.colors[theme.primaryColor][9], 0.5)}`,
         opacity: display ? 1 : 0,
         transition: "all 0.5s ease-in-out",
         borderRadius: theme.radius.xxs,
@@ -81,13 +77,12 @@ export default function Messages() {
       <Flex
         direction="column"
         gap="xs"
-        
         h="100%"
         style={{
           overflowY: "auto",
           overflowX: "hidden",
         }}
-        ref={containerRef} // Attach the ref to the scrollable container
+        ref={containerRef}
       >
         {messages.map((message, i) => (
           <Message key={i} {...message} />
@@ -97,28 +92,24 @@ export default function Messages() {
   );
 }
 
-function Message(props:MessageProps) {
-  const [display, setDisplay] = useState(false)
-  const theme = useMantineTheme()
+function Message(props: MessageProps) {
+  const theme = useMantineTheme();
+  const [display, setDisplay] = useState(false);
 
   useEffect(() => {
-    setTimeout(() => {
-      setDisplay(true)
-    }, 100)
-  }, [])
+    const timer = setTimeout(() => setDisplay(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
-    <Transition 
-      mounted={display}
-      transition='slide-left'
-      duration={500}
-    >
+    <Transition mounted={display} transition="slide-left" duration={500}>
       {(transition) => (
-
-        <Flex align="center" gap="xs"
-          bg='rgba(0,0,0,0.5)'
-          p='xxs'
-          mr='xxs'
+        <Flex
+          align="center"
+          gap="xs"
+          bg="rgba(0,0,0,0.5)"
+          p="xxs"
+          mr="xxs"
           style={{
             borderRadius: theme.radius.xxs,
             ...transition,
@@ -129,46 +120,42 @@ function Message(props:MessageProps) {
               <Tag key={i} {...tag} />
             ))}
           </Flex>
-    
-          <Text size="xs" c="rgba(255,255,255,0.8)">
-            {props.text}
-          </Text>
+          <Text size="xs" c="rgba(255,255,255,0.8)"
+          style={{
+            whiteSpace: "pre-wrap",
+          }}
+          >{props.text.replace(/\^([0-9])/g, () => '')}</Text>
         </Flex>
       )}
-
     </Transition>
-
-  )
+  );
 }
 
-function Tag(props:MessageTags) {
-  const theme = useMantineTheme()
+function Tag(props: MessageTags) {
+  const theme = useMantineTheme();
   return (
     <Flex
       bg={props.color}
-      p='xxs'
-      align='center'
-      justify='center'
-      gap='xxs'
-      style={{
-        borderRadius: theme.radius.xxs
-      }}      
+      p="xxs"
+      align="center"
+      justify="center"
+      gap="xxs"
+      style={{ borderRadius: theme.radius.xxs }}
     >
       {props.icon && (
-        <FontAwesomeIcon icon={props.icon as IconProp} color='white'
-          style={{
-            fontSize: theme.fontSizes.xxs,
-          }}
+        <FontAwesomeIcon
+          icon={props.icon as IconProp}
+          color="white"
+          style={{ fontSize: theme.fontSizes.xxs }}
         />
       )}
-
       <Text
-        size='xxs'
-        c={'white'}
-        style={{
-          fontFamily: 'Akrobat Bold',
-        }}
-      >{props.text.toUpperCase()}</Text>
+        size="xxs"
+        c="white"
+        style={{ fontFamily: "Akrobat Bold" }}
+      >
+        {props.text.toUpperCase()}
+      </Text>
     </Flex>
-  )
+  );
 }

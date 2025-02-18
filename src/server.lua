@@ -16,12 +16,12 @@ local addMessage = function(src, channel, message)
       tags = {
         {
           text = 'User',
-          color = '#ffffff'
+          color = '#4d4d4d'
         },
 
         {
           text = GetPlayerName(src),
-          color = '#ffffff'
+          color = '#4d4d4d'
         }
       }
 
