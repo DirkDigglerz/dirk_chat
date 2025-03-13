@@ -2,7 +2,7 @@ fx_version 'cerulean'
 lua54 'yes' 
 games { 'rdr3', 'gta5' } 
 author 'DirkScripts' 
-description 'Chat - Dirk Pack' 
+description 'Chat - Clean Pack' 
 version      '1.0.3'
 
 
