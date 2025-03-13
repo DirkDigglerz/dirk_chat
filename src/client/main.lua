@@ -35,7 +35,7 @@ addMessage = function(channel, message, tags)
   })
 end
 
-RegisterNetEvent('clean_chat:addMessage', addMessage)
+RegisterNetEvent('dirk_chat:addMessage', addMessage)
 exports('addMessage', addMessage)
 
 
@@ -56,7 +56,7 @@ RegisterNuiCallback('CHAT_MESSAGE', function(data, cb)
   if message:sub(1, 1) == '/' then
     ExecuteCommand(message:sub(2))
   else
-    TriggerServerEvent('clean_chat:addMessage', channel, message)
+    TriggerServerEvent('dirk_chat:addMessage', channel, message)
   end
   cb('ok')
 end)

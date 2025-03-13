@@ -28,12 +28,12 @@ local addMessage = function(src, channel, message)
     }
   end
 
-  TriggerClientEvent('clean_chat:addMessage', -1, channel, message)
+  TriggerClientEvent('dirk_chat:addMessage', -1, channel, message)
 end
 
 exports('addMessage', addMessage)
 
-RegisterNetEvent('clean_chat:addMessage', function(channel, message)
+RegisterNetEvent('dirk_chat:addMessage', function(channel, message)
   local src = source
   addMessage(src, channel, message)
 end)

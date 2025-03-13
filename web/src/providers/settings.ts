@@ -1,7 +1,7 @@
 import { MantineColor, MantineColorShade, MantineColorsTuple } from "@mantine/core";
 
 export const defaultSettings: SettingsProps = {
-  primaryColor:'clean', 
+  primaryColor:'dirk', 
   primaryShade: 9,
   customTheme: [
     "#f8edff",

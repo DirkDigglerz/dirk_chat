@@ -1,7 +1,7 @@
 registeredCommands = {}
 
 local addSuggestion = function(name, help, params)
-  print('Adding suggestion', name, help, json.encode(params, {indent = true}))
+  -- print('Adding suggestion', name, help, json.encode(params, {indent = true}))
   local invoking_resource = GetCurrentResourceName()
   table.insert(registeredCommands, {name = name, help = help, params = params, invoking_resource = invoking_resource})
   SendNuiMessage(json.encode({
@@ -56,7 +56,7 @@ end)
 RegisterNetEvent('chat:addSuggestion', function(command, help, params)
 
   command = command:sub(2)
-  print('Adding suggestion', command, help, json.encode(params, {indent = true}))
+  -- print('Adding suggestion', command, help, json.encode(params, {indent = true}))
   addSuggestion(command, help, params)
 end)
 
