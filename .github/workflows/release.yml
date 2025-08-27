@@ -24,9 +24,9 @@ jobs:
           version: 8.6.1
 
       - name: Setup node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: 16.x
+          node-version: 22.x
           cache: 'pnpm'
           cache-dependency-path: 'web/pnpm-lock.yaml'
 
@@ -49,8 +49,7 @@ jobs:
 
       - name: Bump manifest version
         run: node .github/actions/bump-manifest-version.js
-        env:
-          TGT_RELEASE_VERSION: ${{ github.ref_name }}
+        # The script now writes NEW_VERSION to GITHUB_ENV
 
       - name: Push manifest change
         uses: EndBug/add-and-commit@v8
@@ -59,37 +58,32 @@ jobs:
           push: true
           author_name: Manifest Bumper
           author_email: 41898282+github-actions[bot]@users.noreply.github.com
-          message: 'chore: bump manifest version to ${{ github.ref_name }}'
+          message: 'chore: bump manifest version to ${{ env.NEW_VERSION }}'
 
       - name: Update branch
         working-directory: ./
         run: git push origin HEAD:main
 
-      # - name: Update tag ref
-      #   uses: EndBug/latest-tag@latest 
-      #   with:
-      #     ref: ${{ github.ref_name }}
-          
-
       - name: Bundle files
         run: |
           mkdir -p ./temp/dirk_chat
           mkdir -p ./temp/dirk_chat/web/
-          cp ./fxmanifest.lua ./temp/dirk_chat/
-          cp -r ./settings ./temp/dirk_chat
+          cp ./fxmanifest.lua ./README.md ./temp/dirk_chat
           cp -r ./src ./temp/dirk_chat
+          cp -r ./settings ./temp/dirk_chat
           cp -r ./web/build ./temp/dirk_chat/web/
+          cp -r ./web/public ./temp/dirk_chat/web/
           cd ./temp && zip -r ../dirk_chat.zip ./dirk_chat
+
       - name: Create Release
         uses: marvinpinto/action-automatic-releases@v1.2.1
         id: auto_release
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }} # Use the GitHub token from the repository secrets
-          title: "Release ${{ env.RELEASE_VERSION }}" # Use the version extracted from the workflow
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          title: "Release ${{ env.NEW_VERSION }}"
           prerelease: false
-          files: dirk_chat.zip # Specify the file to attach to the release
-          automatic_release_tag: 'latest_production' # Tag name for the release
+          files: dirk_chat.zip
+          automatic_release_tag: 'latest_production'
         env:
           CI: false
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Ensure this matches the repo token
-
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

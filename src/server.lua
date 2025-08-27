@@ -9,6 +9,8 @@
 ---@field text string
 ---@field tags MessageTags[]|nil
 
+
+
 local addMessage = function(src, channel, message)
   if type(message) == 'string' then
     message = {
