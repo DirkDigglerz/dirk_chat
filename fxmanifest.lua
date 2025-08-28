@@ -3,7 +3,7 @@ lua54 'yes'
 games { 'rdr3', 'gta5' } 
 author 'DirkScripts' 
 description 'Chat - Clean Pack' 
-version      '1.0.5'
+version      '1.0.6'
 
 
 shared_script 'settings/*.*'
