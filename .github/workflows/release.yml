@@ -72,7 +72,6 @@ jobs:
           cp -r ./src ./temp/dirk_chat
           cp -r ./settings ./temp/dirk_chat
           cp -r ./web/build ./temp/dirk_chat/web/
-          cp -r ./web/public ./temp/dirk_chat/web/
           cd ./temp && zip -r ../dirk_chat.zip ./dirk_chat
 
       - name: Create Release
