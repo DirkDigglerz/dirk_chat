@@ -3,9 +3,11 @@
 A lightweight and customizable chat system for FiveM servers.  
 Easily configure behavior such as hiding messages, enabling command-only mode, and more using simple server convars.
 
+[PREVIEW VIDEO](https://streamable.com/flrow6)
 ---
 
 ## Features
+- Easily change the primaryGreen to your server color with the convars found at the top of [here](https://docs.dirkscripts.com/resources/dirk-lib/getting-started#server-variables-convars)
 - Users can change settings themselves if you have this enabled.
 - Toggle between **command-only** or full chat mode  
 - Customizable **chat position**  
