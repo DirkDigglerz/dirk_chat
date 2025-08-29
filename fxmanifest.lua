@@ -2,8 +2,8 @@ fx_version 'cerulean'
 lua54 'yes' 
 games { 'rdr3', 'gta5' } 
 author 'DirkScripts' 
-description 'Chat' 
-version      '1.0.6'
+description 'Chat - Clean Pack' 
+version      '1.0.7'
 
 
 shared_script 'settings/*.*'
