@@ -4,13 +4,14 @@ getUserChatSettings = function()
   return {
     hide = decoded.hide or basic.messageHideMode,
     hideTimeout = decoded.hideTimeout or basic.messageHideTimeout,
-    sounds = decoded.sounds == 'true' or basic.messageSounds == 'true',
+    sounds = decoded.sounds or basic.messageSounds,
     position = decoded.position or basic.position,
+    commandOnly = decoded.commandOnly or basic.commandOnly,
+    userCustomisation = decoded.userCustomisation or basic.userCustomisation,
   }
 end
 
 local updateUserSettings = function(settings)
-  settings.sounds = settings.sounds and 'true' or 'false'
   SetResourceKvp('chatSettings', json.encode(settings))
 end
 

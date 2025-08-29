@@ -124,7 +124,7 @@ function Message(props: MessageProps) {
           style={{
             whiteSpace: "pre-wrap",
           }}
-          >{props.text.replace(/\^([0-9])/g, () => '')}</Text>
+          >{props.text?.replace(/\^([0-9])/g, () => '')}</Text>
         </Flex>
       )}
     </Transition>

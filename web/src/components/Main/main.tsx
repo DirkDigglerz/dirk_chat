@@ -25,7 +25,6 @@ export default function Main() {
   }, [])
 
   useNuiEvent<CommandProps>('ADD_COMMAND', (data) => {
-    console.log('ADD_COMMAND', JSON.stringify(data))
     useChat.setState((state) => ({
       commands: [
         ...state.commands,

@@ -32,6 +32,7 @@ export type UserSettingsProps = {
   hideTimeout: number; // Time in ms to hide the chat
   commandOnly?: boolean;
   sounds: boolean; // Play sounds on message
+  userCustomisation?: boolean;
   
 }
 
@@ -55,6 +56,7 @@ const useChat = create<ChatProps>(() => ({
     hideTimeout: 5000,  
     sounds: false,
     commandOnly: true,
+    userCustomisation: true,
   },
   messages: [],
   commands: [

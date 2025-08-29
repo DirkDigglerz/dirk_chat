@@ -14,26 +14,37 @@ export default function SuggestionBox() {
   const commands = useChat(state => state.commands)
   const [currentSuggestions, setCurrentSuggestions] = useState<CommandProps[]>([])
   const [currentParamPosition, setCurrentParamPosition] = useState<number | null>(null)
+  const commandOnly = useChat(state => state.settings.commandOnly)
 
   // Memoize suggestions calculation for better performance
-  const suggestions = useMemo(() => {
-    if (!currentInput.startsWith('/') || currentInput.length <= 1) {
+const suggestions = useMemo(() => {
+  if (!currentInput.trim()) {
+    // nothing typed, no suggestions
+    return { suggestions: [], paramPosition: null }
+  }
+
+  // If not in commandOnly mode, require a leading "/" and at least 2 chars
+  if (!commandOnly) {
+    if (!currentInput.startsWith("/") || currentInput.length <= 1) {
       return { suggestions: [], paramPosition: null }
     }
+  }
 
-    const input = currentInput.slice(1)
-    const inputParts = input.split(' ')
-    const commandName = inputParts[0]
-    const command = commands.find(cmd => cmd.name === commandName)
-    
-    if (command) {
-      const paramPosition = inputParts.length > 1 ? inputParts.length - 1 : null
-      return { suggestions: [command], paramPosition }
-    } else {
-      const filteredCommands = commands.filter(cmd => cmd.name.startsWith(commandName))
-      return { suggestions: filteredCommands, paramPosition: null }
-    }
-  }, [currentInput, commands])
+  // Strip "/" only when not commandOnly
+  const input = commandOnly ? currentInput : currentInput.slice(1)
+  const inputParts = input.split(" ")
+  const commandName = inputParts[0]
+
+  const command = commands.find(cmd => cmd.name === commandName)
+
+  if (command) {
+    const paramPosition = inputParts.length > 1 ? inputParts.length - 1 : null
+    return { suggestions: [command], paramPosition }
+  } else {
+    const filteredCommands = commands.filter(cmd => cmd.name.startsWith(commandName))
+    return { suggestions: filteredCommands, paramPosition: null }
+  }
+}, [currentInput, commands, commandOnly])
 
   // Update state when suggestions change
   useEffect(() => {

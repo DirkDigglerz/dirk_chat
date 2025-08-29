@@ -45,108 +45,40 @@ function InputBar() {
   const currentInput = useChat((state) => state.currentInput);
   const theme = useMantineTheme();
   const inputRef = useRef<HTMLInputElement | null>(null); // Reference for the input
+  const userCustomisation = useChat((state) => state.settings.userCustomisation);
   const commandOnly = useChat((state) => state.settings.commandOnly);
-  
-  // if the open goes to false close Settingsopen 
+  // if the open goes to false close Settingsopen
   useEffect(() => {
     if (!open) {
       setSettingsOpen(false)
     }
   }, [open])
 
-  // Initialize input with "/" when commandOnly is enabled and chat opens
   useEffect(() => {
-    if (open && commandOnly && currentInput === "") {
-      useChat.setState({ currentInput: "/" });
-    }
-  }, [open, commandOnly]);
-
-  // Handle input changes to enforce "/" prefix in commandOnly mode
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    
-    if (commandOnly) {
-      // Always ensure the input starts with "/"
-      if (!newValue.startsWith("/")) {
-        useChat.setState({ currentInput: "/" + newValue });
-      } else {
-        // Prevent deletion of the "/" by checking if it's trying to be removed
-        if (newValue === "" || newValue.length === 0) {
-          useChat.setState({ currentInput: "/" });
-        } else {
-          useChat.setState({ currentInput: newValue });
-        }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!open) return;
+      if (prevSentMessages.length === 0) return;
+      if (e.key === "ArrowUp") {
+        const newIndex =
+          prevSentMessageIndex === null
+            ? prevSentMessages.length - 1
+            : Math.max(prevSentMessageIndex - 1, 0);
+        setPrevSentMessageIndex(newIndex);
+        useChat.setState({ currentInput: prevSentMessages[newIndex] });
+      } else if (e.key === "ArrowDown") {
+        if (prevSentMessageIndex === null) return;
+        const newIndex = Math.min(prevSentMessageIndex + 1, prevSentMessages.length - 1);
+        setPrevSentMessageIndex(newIndex);
+        useChat.setState({ currentInput: prevSentMessages[newIndex] });
       }
-    } else {
-      useChat.setState({ currentInput: newValue });
-    }
-  }, [commandOnly]);
-
-  // Handle key events for preventing "/" deletion and arrow key navigation
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (!open) return;
-    
-    // Handle "/" protection in commandOnly mode
-    if (commandOnly && inputRef.current) {
-      const input = inputRef.current;
-      const cursorPosition = input.selectionStart || 0;
-      
-      // Prevent deletion of "/" when it's at the beginning
-      if ((e.key === "Backspace" || e.key === "Delete") && 
-          cursorPosition === 1 && 
-          currentInput.startsWith("/")) {
-        e.preventDefault();
-        return;
-      }
-      
-      // Prevent cursor from being positioned before "/"
-      if (e.key === "ArrowLeft" && cursorPosition === 1) {
-        e.preventDefault();
-        return;
-      }
-      
-      // Prevent home key from going before "/"
-      if (e.key === "Home") {
-        e.preventDefault();
-        input.setSelectionRange(1, 1);
-        return;
-      }
-    }
-    
-    // Handle arrow key navigation for message history
-    if (prevSentMessages.length === 0) return;
-    
-    if (e.key === "ArrowUp") {
-      e.preventDefault();
-      const newIndex =
-        prevSentMessageIndex === null
-          ? prevSentMessages.length - 1
-          : Math.max(prevSentMessageIndex - 1, 0);
-      setPrevSentMessageIndex(newIndex);
-      const message = prevSentMessages[newIndex];
-      useChat.setState({ 
-        currentInput: commandOnly && !message.startsWith("/") ? "/" + message : message 
-      });
-    } else if (e.key === "ArrowDown") {
-      if (prevSentMessageIndex === null) return;
-      e.preventDefault();
-      const newIndex = Math.min(prevSentMessageIndex + 1, prevSentMessages.length - 1);
-      setPrevSentMessageIndex(newIndex);
-      const message = prevSentMessages[newIndex];
-      useChat.setState({ 
-        currentInput: commandOnly && !message.startsWith("/") ? "/" + message : message 
-      });
-    }
-  }, [prevSentMessageIndex, prevSentMessages, open, commandOnly, currentInput]);
-
-  useEffect(() => {
+    };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
+  }, [prevSentMessageIndex, prevSentMessages, open]);
 
   const handleMessageSend = useCallback(
     (currentInput: string) => {
-      if (currentInput === "" || (commandOnly && currentInput === "/")) {
+      if (currentInput === "") {
         useChat.setState({ open: false });
         fetchNui("CHAT_CLOSED");
         return;
@@ -168,14 +100,16 @@ function InputBar() {
       } else {
         // close 
         useChat.setState({ open: false });
-        fetchNui("CHAT_MESSAGE", { message: currentInput });
+        let thisInput = currentInput;
+        if (commandOnly && !currentInput.startsWith("/")) {
+          thisInput = `/${thisInput}`;
+        }
+        fetchNui("CHAT_MESSAGE", { message: thisInput });
       }
 
       setPrevSentMessages([...prevSentMessages, currentInput]);
       setPrevSentMessageIndex(null);
-      
-      // Reset input based on commandOnly mode
-      useChat.setState({ currentInput: commandOnly ? "/" : "" });
+      useChat.setState({ currentInput: "" });
     },
     [prevSentMessages, settings.sounds, commandOnly]
   );
@@ -195,7 +129,7 @@ function InputBar() {
         inputRef.current.removeEventListener("keydown", handleKeyDown);
       }
     };
-  }, [currentInput, handleMessageSend]); // Added handleMessageSend to dependencies
+  }, [currentInput]); // Only run when the input changes
 
   // Handle refocusing the input when it loses focus
   const handleBlur = () => {
@@ -204,21 +138,14 @@ function InputBar() {
     }
   };
 
-  // Refocus input when `open` becomes true or on page load
-  useEffect(() => {
-    if (open && inputRef.current) {
-      inputRef.current.focus();
-      
-      // Set cursor position after "/" in commandOnly mode
-      if (commandOnly && currentInput.startsWith("/")) {
-        setTimeout(() => {
-          if (inputRef.current) {
-            inputRef.current.setSelectionRange(1, 1);
-          }
-        }, 0);
+    // Refocus input when `open` becomes true or on page load
+    useEffect(() => {
+      if (open && inputRef.current) {
+        inputRef.current.focus();
       }
-    }
-  }, [open, commandOnly, currentInput]);
+    }, [open]);
+
+
 
   return (
     <Flex>
@@ -258,23 +185,27 @@ function InputBar() {
           value={currentInput}
           type="text"
           spellCheck={false}
-          onChange={handleInputChange}
+          onChange={(e) => useChat.setState({ currentInput: e.target.value })}
           onBlur={handleBlur} // Ensure refocus on blur
         />
-        <InputButton
-          inUse={settingsOpen}
-          icon="fa fa-cog"
-          onClick={() => setSettingsOpen(!settingsOpen)}
-        />
+        {userCustomisation && (
+          <InputButton
+            inUse={settingsOpen}
+            icon="fa fa-cog"
+            onClick={() => setSettingsOpen(!settingsOpen)}
+          />
+        )}
         <InputButton
           icon="fa fa-paper-plane"
           onClick={() => handleMessageSend(currentInput)}
         />
-        <SettingsMenu open={settingsOpen} />
+        {userCustomisation && <SettingsMenu open={settingsOpen} />}
       </MotionFlex>
       <SuggestionBox />
     </Flex>
   );
 }
+
+
 
 export default InputBar;

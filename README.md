@@ -5,7 +5,8 @@ Easily configure behavior such as hiding messages, enabling command-only mode, a
 
 ---
 
-## 🚀 Features
+## Features
+- Users can change settings themselves if you have this enabled.
 - Toggle between **command-only** or full chat mode  
 - Customizable **chat position**  
 - Flexible **message hiding system** (always, never, auto)  
@@ -14,7 +15,7 @@ Easily configure behavior such as hiding messages, enabling command-only mode, a
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 The system uses convars for easy customization.  
 Add these to your `server.cfg`:
@@ -23,17 +24,20 @@ Add these to your `server.cfg`:
 # Restrict chat to commands only
 set chat:commandOnly false
 
-# Position of the chat box: top-left, top-right, bottom-left, bottom-right
-set chat:position "top-left"
+# Position of the chat box: top-left, top-right, bottom-left, bottom-right, bottom, top, right, left
+set chat:position top-left
 
 # Message hide behavior:
 #   always - messages are hidden unless chat is toggled
 #   never  - messages are always visible
 #   auto   - messages show temporarily unless chat is opened
-set chat:messageHideMode "always"
+set chat:messageHideMode always
 
 # Duration (ms) messages remain visible when hide mode = auto
 set chat:messageHideTimeout 5000
 
 # Play a sound when a new message is sent
 set chat:messageSounds true
+
+# User Customisation 
+set chat:userCustomisation false

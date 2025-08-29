@@ -54,21 +54,8 @@ RegisterNetEvent('chat:addSuggestions', function(suggestions)
 end)
 
 RegisterNetEvent('chat:addSuggestion', function(command, help, params)
-
   command = command:sub(2)
   -- print('Adding suggestion', command, help, json.encode(params, {indent = true}))
   addSuggestion(command, help, params)
 end)
 
--- --- eXAMPLE COMMAND 
--- RegisterCommand('example', function(source, args, rawCommand)
---   TriggerEvent('chat:addMessage', {
---     color = {255, 0, 0},
---     multiline = true,
---     args = {'[EXAMPLE]', 'This is an example command'}
---   })
--- end, false)
-
--- TriggerEvent('chat:addSuggestion', '/example', 'This is an example command', {
---   {name = 'example', help = 'This is an example parameter'}
--- })
