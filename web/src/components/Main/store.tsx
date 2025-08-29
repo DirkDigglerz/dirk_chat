@@ -27,8 +27,10 @@ export type CommandProps = {
 }
 
 export type UserSettingsProps = {
+  position: 'left' | 'top-left' | 'top' | 'top-right' | 'right' | 'bottom-right' | 'bottom' | 'bottom-left';
   hide: 'always' | 'never' | 'auto'; // Auto will hide the chat after a certain amount of time
   hideTimeout: number; // Time in ms to hide the chat
+  commandOnly?: boolean;
   sounds: boolean; // Play sounds on message
   
 }
@@ -39,36 +41,22 @@ export type ChatProps = {
   commands: CommandProps[];
   messages: MessageProps[];
   settings: UserSettingsProps;
-}
+};
 
 
 
 const useChat = create<ChatProps>(() => ({
   open: isEnvBrowser(),
+
   currentInput: '',
   settings: {
+    position: 'top',
     hide: 'auto',
     hideTimeout: 5000,  
-    sounds: false
+    sounds: false,
+    commandOnly: true,
   },
-  messages: [
-    {
-      text: 'Welcome to the chat!',
-      author: 'system',
-      tags: [
-        {
-          text: 'system',
-          color: 'red'
-        },
-        {
-          text: 'tweet',
-          icon: 'fab fa-twitter',
-          color: 'blue'
-        }
-      ]
-
-    }
-  ],
+  messages: [],
   commands: [
     {
       name: 'help',

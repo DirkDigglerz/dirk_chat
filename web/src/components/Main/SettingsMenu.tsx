@@ -21,7 +21,7 @@ export default function SettingsMenu(props:SettingsMenuProps){
       opacity={props.open ? 1 : 0}
       style={{
         transform: 'translate(100%, 100%)',
-        borderRadius: theme.radius.xxs,
+        borderRadius: theme.radius.xs,
         transition: 'all 0.3s ease-in-out',
         userSelect: 'none', 
       }}
@@ -31,7 +31,7 @@ export default function SettingsMenu(props:SettingsMenuProps){
     >
       <Text
         ta='center'
-        size='xs'
+        size='xxs'
         w='90%'
         p='xxs'
         style={{

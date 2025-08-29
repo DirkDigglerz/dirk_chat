@@ -5,6 +5,7 @@ getUserChatSettings = function()
     hide = decoded.hide or basic.messageHideMode,
     hideTimeout = decoded.hideTimeout or basic.messageHideTimeout,
     sounds = decoded.sounds == 'true' or basic.messageSounds == 'true',
+    position = decoded.position or basic.position,
   }
 end
 

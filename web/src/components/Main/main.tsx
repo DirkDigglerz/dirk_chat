@@ -1,5 +1,5 @@
 import { BackgroundImage, Flex, MantineColor, MantineColorShade, MantineColorsTuple } from "@mantine/core"
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
 import { useNuiEvent } from "../../hooks/useNuiEvent"
 import useSettings from "../../providers/settings"
 import { fetchNui } from "../../utils/fetchNui"
@@ -89,20 +89,39 @@ export default function Main() {
       })
     })
   }, [])
-
-  
+  const position = useChat((state) => state.settings.position);
+  const positionProps = useMemo(() => {
+    switch (position) {
+      case 'left':
+        return { left: 0, top: '50%', transform: 'translateY(-50%)' };
+      case 'top-left':
+        return { left: 0, top: 0 };
+      case 'top':
+        return { left: '50%', top: 0, transform: 'translateX(-50%)' };
+      case 'top-right':
+        return { right: 0, top: 0 };
+      case 'right':
+        return { right: 0, top: '50%', transform: 'translateY(-50%)' };
+      case 'bottom-right':
+        return { right: 0, bottom: 0 };
+      case 'bottom':
+        return { left: '50%', bottom: 0, transform: 'translateX(-50%)' };
+      case 'bottom-left':
+        return { left: 0, bottom: 0 };
+    }
+  }, [position])
   return (
     <Wrapper>
       <Flex
         direction='column'
         pos='absolute'
         m='xs'
-        left={'0'}
         w='45vh'
         h='25vh'
         gap='xs'
 
         style={{
+          ...positionProps,
           transition: 'all 0.5s ease-in-out',
         }}
       >

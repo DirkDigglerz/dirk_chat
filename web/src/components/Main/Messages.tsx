@@ -69,7 +69,7 @@ export default function Messages() {
       style={{
         opacity: display ? 1 : 0,
         transition: "all 0.5s ease-in-out",
-        borderRadius: theme.radius.xxs,
+        borderRadius: theme.radius.xs,
         overflow: "hidden",
       }}
       gap="xs"
@@ -111,7 +111,7 @@ function Message(props: MessageProps) {
           p="xxs"
           mr="xxs"
           style={{
-            borderRadius: theme.radius.xxs,
+            borderRadius: theme.radius.xs,
             ...transition,
           }}
         >
@@ -120,7 +120,7 @@ function Message(props: MessageProps) {
               <Tag key={i} {...tag} />
             ))}
           </Flex>
-          <Text size="xs" c="rgba(255,255,255,0.8)"
+          <Text size="xxs" c="rgba(255,255,255,0.8)"
           style={{
             whiteSpace: "pre-wrap",
           }}
@@ -140,7 +140,7 @@ function Tag(props: MessageTags) {
       align="center"
       justify="center"
       gap="xxs"
-      style={{ borderRadius: theme.radius.xxs }}
+      style={{ borderRadius: theme.radius.xs }}
     >
       {props.icon && (
         <FontAwesomeIcon

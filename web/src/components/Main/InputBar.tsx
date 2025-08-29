@@ -1,6 +1,6 @@
 import { IconProp } from "@fortawesome/fontawesome-svg-core"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { Flex, Text, useMantineTheme } from "@mantine/core"
+import { Flex, useMantineTheme } from "@mantine/core"
 import { useHover } from "@mantine/hooks"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useAudioPlayerStore } from "../../providers/audio/audio"
@@ -8,7 +8,8 @@ import colorWithAlpha from "../../utils/colorWithAlpha"
 import { fetchNui } from "../../utils/fetchNui"
 import { isEnvBrowser } from "../../utils/misc"
 import SettingsMenu from "./SettingsMenu"
-import useChat, { CommandProps } from "./store"
+import useChat from "./store"
+import SuggestionBox, { MotionFlex } from "./SuggestionBox"
 
 type InputButtonProps = {
   icon: string;
@@ -44,7 +45,8 @@ function InputBar() {
   const currentInput = useChat((state) => state.currentInput);
   const theme = useMantineTheme();
   const inputRef = useRef<HTMLInputElement | null>(null); // Reference for the input
-
+  const commandOnly = useChat((state) => state.settings.commandOnly);
+  
   // if the open goes to false close Settingsopen 
   useEffect(() => {
     if (!open) {
@@ -52,31 +54,99 @@ function InputBar() {
     }
   }, [open])
 
+  // Initialize input with "/" when commandOnly is enabled and chat opens
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!open) return;
-      if (prevSentMessages.length === 0) return;
-      if (e.key === "ArrowUp") {
-        const newIndex =
-          prevSentMessageIndex === null
-            ? prevSentMessages.length - 1
-            : Math.max(prevSentMessageIndex - 1, 0);
-        setPrevSentMessageIndex(newIndex);
-        useChat.setState({ currentInput: prevSentMessages[newIndex] });
-      } else if (e.key === "ArrowDown") {
-        if (prevSentMessageIndex === null) return;
-        const newIndex = Math.min(prevSentMessageIndex + 1, prevSentMessages.length - 1);
-        setPrevSentMessageIndex(newIndex);
-        useChat.setState({ currentInput: prevSentMessages[newIndex] });
+    if (open && commandOnly && currentInput === "") {
+      useChat.setState({ currentInput: "/" });
+    }
+  }, [open, commandOnly]);
+
+  // Handle input changes to enforce "/" prefix in commandOnly mode
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    
+    if (commandOnly) {
+      // Always ensure the input starts with "/"
+      if (!newValue.startsWith("/")) {
+        useChat.setState({ currentInput: "/" + newValue });
+      } else {
+        // Prevent deletion of the "/" by checking if it's trying to be removed
+        if (newValue === "" || newValue.length === 0) {
+          useChat.setState({ currentInput: "/" });
+        } else {
+          useChat.setState({ currentInput: newValue });
+        }
       }
-    };
+    } else {
+      useChat.setState({ currentInput: newValue });
+    }
+  }, [commandOnly]);
+
+  // Handle key events for preventing "/" deletion and arrow key navigation
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (!open) return;
+    
+    // Handle "/" protection in commandOnly mode
+    if (commandOnly && inputRef.current) {
+      const input = inputRef.current;
+      const cursorPosition = input.selectionStart || 0;
+      
+      // Prevent deletion of "/" when it's at the beginning
+      if ((e.key === "Backspace" || e.key === "Delete") && 
+          cursorPosition === 1 && 
+          currentInput.startsWith("/")) {
+        e.preventDefault();
+        return;
+      }
+      
+      // Prevent cursor from being positioned before "/"
+      if (e.key === "ArrowLeft" && cursorPosition === 1) {
+        e.preventDefault();
+        return;
+      }
+      
+      // Prevent home key from going before "/"
+      if (e.key === "Home") {
+        e.preventDefault();
+        input.setSelectionRange(1, 1);
+        return;
+      }
+    }
+    
+    // Handle arrow key navigation for message history
+    if (prevSentMessages.length === 0) return;
+    
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const newIndex =
+        prevSentMessageIndex === null
+          ? prevSentMessages.length - 1
+          : Math.max(prevSentMessageIndex - 1, 0);
+      setPrevSentMessageIndex(newIndex);
+      const message = prevSentMessages[newIndex];
+      useChat.setState({ 
+        currentInput: commandOnly && !message.startsWith("/") ? "/" + message : message 
+      });
+    } else if (e.key === "ArrowDown") {
+      if (prevSentMessageIndex === null) return;
+      e.preventDefault();
+      const newIndex = Math.min(prevSentMessageIndex + 1, prevSentMessages.length - 1);
+      setPrevSentMessageIndex(newIndex);
+      const message = prevSentMessages[newIndex];
+      useChat.setState({ 
+        currentInput: commandOnly && !message.startsWith("/") ? "/" + message : message 
+      });
+    }
+  }, [prevSentMessageIndex, prevSentMessages, open, commandOnly, currentInput]);
+
+  useEffect(() => {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [prevSentMessageIndex, prevSentMessages, open]);
+  }, [handleKeyDown]);
 
   const handleMessageSend = useCallback(
     (currentInput: string) => {
-      if (currentInput === "") {
+      if (currentInput === "" || (commandOnly && currentInput === "/")) {
         useChat.setState({ open: false });
         fetchNui("CHAT_CLOSED");
         return;
@@ -103,9 +173,11 @@ function InputBar() {
 
       setPrevSentMessages([...prevSentMessages, currentInput]);
       setPrevSentMessageIndex(null);
-      useChat.setState({ currentInput: "" });
+      
+      // Reset input based on commandOnly mode
+      useChat.setState({ currentInput: commandOnly ? "/" : "" });
     },
-    [prevSentMessages, settings.sounds]
+    [prevSentMessages, settings.sounds, commandOnly]
   );
 
   // listen for enter key while input is focused
@@ -123,7 +195,7 @@ function InputBar() {
         inputRef.current.removeEventListener("keydown", handleKeyDown);
       }
     };
-  }, [currentInput]); // Only run when the input changes
+  }, [currentInput, handleMessageSend]); // Added handleMessageSend to dependencies
 
   // Handle refocusing the input when it loses focus
   const handleBlur = () => {
@@ -132,27 +204,40 @@ function InputBar() {
     }
   };
 
-    // Refocus input when `open` becomes true or on page load
-    useEffect(() => {
-      if (open && inputRef.current) {
-        inputRef.current.focus();
+  // Refocus input when `open` becomes true or on page load
+  useEffect(() => {
+    if (open && inputRef.current) {
+      inputRef.current.focus();
+      
+      // Set cursor position after "/" in commandOnly mode
+      if (commandOnly && currentInput.startsWith("/")) {
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.setSelectionRange(1, 1);
+          }
+        }, 0);
       }
-    }, [open]);
-
-
+    }
+  }, [open, commandOnly, currentInput]);
 
   return (
     <Flex>
-      <Flex
+      <MotionFlex
         pos="absolute"
-        left={open ? "0" : "-80vh"}
+        animate={{
+          left: open ? "0" : "-100vw",
+          transition: {
+            type: "spring",
+            damping: 25,
+            stiffness: 300,
+          },
+        }}
         mt="auto"
         bg="rgba(0,0,0,0.5)"
         w="100%"
         align="center"
         style={{
-          borderRadius: theme.radius.xxs,
-          transition: "all 0.1s ease-in-out",
+          borderRadius: theme.radius.xs,
           outline: `0.2vh solid ${colorWithAlpha(theme.colors[theme.primaryColor][9], 0.5)}`,
         }}
       >
@@ -173,7 +258,7 @@ function InputBar() {
           value={currentInput}
           type="text"
           spellCheck={false}
-          onChange={(e) => useChat.setState({ currentInput: e.target.value })}
+          onChange={handleInputChange}
           onBlur={handleBlur} // Ensure refocus on blur
         />
         <InputButton
@@ -186,115 +271,10 @@ function InputBar() {
           onClick={() => handleMessageSend(currentInput)}
         />
         <SettingsMenu open={settingsOpen} />
-      </Flex>
+      </MotionFlex>
       <SuggestionBox />
     </Flex>
   );
-}
-
-function SuggestionBox(){
-  const theme = useMantineTheme()
-  const open = useChat(state => state.open)
-  const currentInput = useChat(state => state.currentInput)
-  const commands = useChat(state => state.commands)
-  const [currentSuggestions, setCurrentSuggestions] = useState<CommandProps[]>([])
-  const [currentParamPosition, setCurrentParamPosition] = useState<number | null>(null)
-
-  // if global closes close the suggestions
-  useEffect(() => {
-    if (!open) {
-      setCurrentSuggestions([])
-    }
-  }, [open]) 
-
-  // Listen for tab key for autocomplete of first recommended suggestion 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Tab') {
-        if (currentSuggestions.length > 0) {
-          useChat.setState({ currentInput: `/${currentSuggestions[0].name}` })
-        }
-      }
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [currentSuggestions])
-    
-  // If the input starts with / assume its a command and look for suggestions. 
-  // If the input == the command name, show the help text for the command. 
-  // If the input shows the command name and a space then show the help text along with the first param. so on and so forth.
-  useEffect(() => {
-    if (currentInput.startsWith('/') && currentInput.length > 1) {
-      const input = currentInput.slice(1)
-      const inputParts = input.split(' ')
-      const commandName = inputParts[0]
-      const command = commands.find(command => command.name === commandName)
-      if (command) {
-        setCurrentSuggestions([command])
-        if (inputParts.length > 1) {
-          const paramPosition = inputParts.length - 1
-          setCurrentParamPosition(paramPosition)
-        }
-        else {
-          setCurrentParamPosition(null)
-        }
-      } else {
-        setCurrentSuggestions(commands.filter(command => command.name.startsWith(commandName)))
-      }
-    } else {
-      setCurrentSuggestions([])
-      setCurrentParamPosition(null)
-    }
-  }, [currentInput, commands])
-
-
-  return (
-    <Flex
-      pos='absolute'
-      p='xs'
-      direction={'column'}
-      bottom='-4vh'
-      left={currentSuggestions.length === 0 ? '-50vh' : '0'}
-      bg='rgba(0,0,0,0.5)'
-      w='100%'
-      mah='10vh'
-      gap='0.1vh'
-      style={{
-        overflow: 'hidden',
-        // opacity: currentSuggestions.length === 0 ? 0 : 1,
-        outline: `0.2vh solid ${colorWithAlpha(theme.colors[theme.primaryColor][9], 0.5)}`,
-        transform: 'translateY(100%)',
-        transition: 'all 0.3s ease-in-out',
-        borderRadius: theme.radius.xxs,
-      }}
-
-    >
-      {currentSuggestions.map((command) => (
-        <Flex
-          direction={'column'}
-        >
-          <Flex
-            gap='xxs'
-          >
-            <Text
-              size='xs'
-            >/{command.name}</Text>
-            {command.params && command.params.map((param, indexOf) => (
-              <Text
-                size='xs'
-                c={currentParamPosition === (indexOf + 1 )? theme.colors[theme.primaryColor][9] : 'rgba(255,255,255,0.8)'}
-              >[{param.name}]</Text>
-            ))}
-
-
-          </Flex>
-          <Text size='xxs'>
-            {currentParamPosition == null && command.help || command.params && currentParamPosition && command.params[currentParamPosition - 1]?.help} 
-          </Text>
-        </Flex> 
-      ))}
-    </Flex>
-  )
 }
 
 export default InputBar;

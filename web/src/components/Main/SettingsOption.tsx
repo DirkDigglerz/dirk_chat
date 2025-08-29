@@ -51,7 +51,7 @@ export default function SettingsOption(props:SettingsOptionProps){
       style={{
         cursor: 'pointer',
         transition: 'all 0.1s ease-in-out',
-        borderRadius: theme.radius.xxs,
+        borderRadius: theme.radius.xs,
       }}
     >
       <Flex
@@ -76,7 +76,7 @@ export default function SettingsOption(props:SettingsOptionProps){
         <Checkbox 
           size='sm'
           ml='auto'
-          radius='xxs'
+          radius='xs'
           checked={settings[props.keyIndex as keyof typeof settings] as boolean}
       
           onChange={(e) => {
@@ -94,8 +94,10 @@ export default function SettingsOption(props:SettingsOptionProps){
       {props.type === 'segments' && (
         <SegmentedControl
           bg='rgba(0,0,0,0.5)'
-          radius='xxs'
-          size='xs'
+          radius='xs'
+          size='xxs'
+          w='100%'
+
           color={colorWithAlpha(theme.colors[theme.primaryColor][9], 0.7)}
           withItemsBorders={false}
           data={props.segments as string[]}
@@ -122,7 +124,7 @@ export default function SettingsOption(props:SettingsOptionProps){
               {value} Seconds
             </Text>
           )}
-          radius='xxs'
+          radius='xs'
           styles={{
             thumb: {
               aspectRatio: 1,
@@ -131,7 +133,7 @@ export default function SettingsOption(props:SettingsOptionProps){
               display: 'flex', 
               alignItems: 'center',
               justifyContent: 'center',
-              borderRadius: theme.radius.xxs,
+              borderRadius: theme.radius.xs,
               backgroundColor: 'rgba(0,0,0,0.5)',
               bottom: 'calc(100% + 0.5vh)',
               aspectRatio: '1/1',
